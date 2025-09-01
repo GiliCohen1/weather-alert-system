@@ -28,3 +28,59 @@ Before running, make sure you have:
 ```bash
 git clone https://github.com/GiliCohen1/weather-alert-system.git
 cd weather-alert-system
+
+### 2. Backend Setup
+
+Navigate to the backend folder:
+
+cd backend
+
+
+Install dependencies:
+
+npm install
+
+
+Create a .env file in the backend/ directory:
+
+PORT=5000
+DATABASE_URL=postgresql://<username>:<password>@localhost:5432/weather_alerts
+EVALUATION_INTERVAL_MINUTES=5
+
+
+Replace <username> and <password> with your local PostgreSQL credentials.
+
+Initialize the database:
+
+psql -U <username> -d postgres -f migrations/init.sql
+
+
+This will create the weather_alerts database and the required tables.
+
+Start the backend server:
+
+npm run dev
+
+
+The backend will run on:
+👉 http://localhost:5000/api
+
+### 3. Frontend Setup
+
+Open a new terminal and navigate to the frontend:
+
+cd frontend
+
+
+Install dependencies:
+
+npm install
+
+
+Start the frontend:
+
+npm run dev
+
+
+The frontend will run on:
+👉 http://localhost:5173
