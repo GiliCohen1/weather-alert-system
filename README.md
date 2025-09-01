@@ -1,93 +1,30 @@
-# Weather Alert System
+# 🌦️ Weather Alert System
 
-## Overview
-The Weather Alert System is a full-stack application that provides real-time weather alerts using the Tomorrow.io API. The project consists of a React + TypeScript frontend and a Node.js + TypeScript backend, designed to follow best coding practices.
+A full-stack application that allows users to create custom weather alerts.  
+The system periodically evaluates stored alerts against live weather data and notifies when conditions are met.  
 
-## Features
-- Fetches weather data and alerts from the Tomorrow.io API.
-- Allows users to create and manage weather alerts.
-- Responsive and user-friendly interface built with React.
+## 📂 Source
+Repository: [Weather Alert System](https://github.com/GiliCohen1/weather-alert-system)
 
-## Project Structure
-```
-weather-alert-system
-├── backend
-│   ├── src
-│   │   ├── app.ts
-│   │   ├── controllers
-│   │   │   └── weatherController.ts
-│   │   ├── routes
-│   │   │   └── weatherRoutes.ts
-│   │   ├── services
-│   │   │   └── tomorrowApiService.ts
-│   │   └── types
-│   │       └── index.ts
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── README.md
-├── frontend
-│   ├── public
-│   │   └── index.html
-│   ├── src
-│   │   ├── App.tsx
-│   │   ├── components
-│   │   │   └── WeatherAlert.tsx
-│   │   ├── services
-│   │   │   └── api.ts
-│   │   ├── types
-│   │   │   └── index.ts
-│   │   └── styles
-│   │       └── App.css
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── README.md
-├── .gitignore
-└── README.md
-```
+## ⚡ Execution Method
 
-## Backend Setup
-1. Navigate to the `backend` directory.
-2. Install dependencies:
-   ```
-   npm install
-   ```
-3. Create a `.env` file and add your Tomorrow.io API key:
-   ```
-   TOMORROW_API_KEY=your_api_key_here
-   ```
-4. Start the server:
-   ```
-   npm run start
-   ```
+This project is designed to run **locally**.  
+Follow the steps below to set up both the **backend (Node.js + Express + PostgreSQL)** and **frontend (React + Vite)**.
 
-## Frontend Setup
-1. Navigate to the `frontend` directory.
-2. Install dependencies:
-   ```
-   npm install
-   ```
-3. Start the React application:
-   ```
-   npm run start
-   ```
+## 🛠️ Prerequisites
 
-## Deployment
-### Frontend
-To deploy the frontend on GitHub Pages:
-1. Build the application:
-   ```
-   npm run build
-   ```
-2. Deploy to GitHub Pages:
-   ```
-   npm run deploy
-   ```
+Before running, make sure you have:
 
-### Backend
-For backend deployment, consider using services like Heroku, AWS, or DigitalOcean. Follow their respective documentation for deployment steps.
+- [Node.js](https://nodejs.org/) (v18 or later)
+- [npm](https://www.npmjs.com/) (comes with Node.js)
+- [PostgreSQL](https://www.postgresql.org/download/) (installed locally)
+- Git (for cloning the repository)
 
-## Contributing
-Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
 
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
+## 🚀 Setup Instructions
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/GiliCohen1/weather-alert-system.git
+cd weather-alert-system
