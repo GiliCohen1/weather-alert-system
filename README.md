@@ -28,6 +28,7 @@ Before running, make sure you have:
 ```bash
 git clone https://github.com/GiliCohen1/weather-alert-system.git
 cd weather-alert-system
+```
 
 ### 2. Backend Setup
 
