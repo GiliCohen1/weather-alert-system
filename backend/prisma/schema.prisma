@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Alert {
+  id          String   @id @default(uuid())
+  name        String?
+  locationType String  // 'city' or 'coords'
+  city        String?
+  lat         Float?
+  lon         Float?
+  parameter   String   // 'temperature', 'windSpeed', 'precipitationProbability'
+  operator    String   // '>', '>=', '<', '<=', '=='
+  threshold   Float
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  evaluations AlertEvaluation[]
+
+  @@index([locationType])
+}
+
+model AlertEvaluation {
+  id            String   @id @default(uuid())
+  alertId       String
+  evaluatedAt   DateTime
+  observedValue Float
+  triggered     Boolean
+  alert         Alert    @relation(fields: [alertId], references: [id], onDelete: Cascade)
+
+  @@index([alertId, evaluatedAt])
+}
