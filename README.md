@@ -45,9 +45,9 @@ npm install
 
 Create a .env file in the backend/ directory:
 
-PORT=5000
-DATABASE_URL=postgresql://<username>:<password>@localhost:5432/weather_alerts
-EVALUATION_INTERVAL_MINUTES=5
+* PORT=5000
+* DATABASE_URL=postgresql://<username>:<password>@localhost:5432/weather_alerts
+* EVALUATION_INTERVAL_MINUTES=5
 
 
 Replace <username> and <password> with your local PostgreSQL credentials.
