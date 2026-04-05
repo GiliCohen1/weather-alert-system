@@ -1,93 +1,191 @@
 # Weather Alert System
 
-## Overview
-The Weather Alert System is a full-stack application that provides real-time weather alerts using the Tomorrow.io API. The project consists of a React + TypeScript frontend and a Node.js + TypeScript backend, designed to follow best coding practices.
+A production-grade full-stack weather monitoring platform built with React 18, Express, Prisma, and WebSocket real-time updates. Create custom weather alerts, explore conditions, and receive instant notifications when thresholds are breached.
+
+## Architecture
+
+```mermaid
+graph TB
+    subgraph Frontend ["Frontend (React 18 + TypeScript)"]
+        UI[UI Components] --> Pages[Pages]
+        Pages --> API[API Service + Axios]
+        Pages --> WS[Socket.io Client]
+        Auth[Auth Context] --> API
+    end
+
+    subgraph Backend ["Backend (Express + TypeScript)"]
+        Routes[Routes + Swagger] --> Controllers
+        Controllers --> Services
+        Services --> DB[(PostgreSQL + Prisma)]
+        Services --> TomorrowAPI[Tomorrow.io API]
+        SocketSvc[Socket.io Server] --> WS
+        Scheduler[Alert Evaluator] --> Services
+        Scheduler --> SocketSvc
+    end
+
+    API --> Routes
+    WS --> SocketSvc
+```
 
 ## Features
-- Fetches weather data and alerts from the Tomorrow.io API.
-- Allows users to create and manage weather alerts.
-- Responsive and user-friendly interface built with React.
+
+- **Dashboard** — Overview stats, weather metrics, system health
+- **Weather Explorer** — Multi-location comparison with real-time data
+- **Alert Wizard** — 3-step form (Location → Condition → Review) for creating monitors
+- **Live Status** — WebSocket-powered real-time alert monitoring with timeline feed
+- **Auth System** — JWT-based registration/login with protected routes
+- **Notifications** — In-app notification bell with unread count
+- **Dark Mode** — System-preference-aware theme toggle
+- **API Docs** — Interactive Swagger UI at `/api/docs`
+- **Responsive** — Mobile-first design with hamburger navigation
+
+## Tech Stack
+
+| Layer     | Technology                                                       |
+| --------- | ---------------------------------------------------------------- |
+| Frontend  | React 18, TypeScript, Tailwind CSS 3, Recharts, Socket.io Client |
+| Backend   | Express 4, TypeScript, Prisma ORM, Zod validation                |
+| Database  | PostgreSQL 16                                                    |
+| Auth      | JWT + bcrypt                                                     |
+| Real-time | Socket.io                                                        |
+| API Docs  | Swagger / OpenAPI 3.0                                            |
+| Testing   | Jest, Supertest, React Testing Library                           |
+| CI/CD     | GitHub Actions                                                   |
+| Infra     | Docker Compose                                                   |
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js ≥ 18
+- PostgreSQL (or Docker)
+- [Tomorrow.io API key](https://www.tomorrow.io/weather-api/)
+
+### Option 1: Docker (recommended)
+
+```bash
+# Clone the repo
+git clone <repo-url> && cd weather-alert-system
+
+# Create backend env file
+cp backend/.env.example backend/.env
+# Edit backend/.env with your TOMORROW_API_KEY
+
+# Start everything
+docker compose up -d
+
+# Run database migrations
+docker compose exec backend npx prisma migrate deploy
+```
+
+Frontend: http://localhost:3000 | Backend: http://localhost:5000 | Swagger: http://localhost:5000/api/docs
+
+### Option 2: Manual Setup
+
+```bash
+# Backend
+cd backend
+npm install
+cp .env.example .env    # Edit with your DB URL + API key
+npx prisma generate
+npx prisma migrate dev
+npm run dev
+
+# Frontend (new terminal)
+cd frontend
+npm install
+npm start
+```
+
+### Environment Variables
+
+**Backend** (`backend/.env`):
+
+```
+DATABASE_URL=postgresql://user:pass@localhost:5432/weather_alerts
+TOMORROW_API_KEY=your_key_here
+JWT_SECRET=your_secret_here
+JWT_EXPIRES_IN=7d
+PORT=5000
+CORS_ORIGIN=http://localhost:3000
+```
+
+**Frontend** (`frontend/.env`):
+
+```
+REACT_APP_API_BASE_URL=http://localhost:5000/api
+REACT_APP_WS_URL=http://localhost:5000
+```
 
 ## Project Structure
+
 ```
-weather-alert-system
-├── backend
-│   ├── src
-│   │   ├── app.ts
-│   │   ├── controllers
-│   │   │   └── weatherController.ts
-│   │   ├── routes
-│   │   │   └── weatherRoutes.ts
-│   │   ├── services
-│   │   │   └── tomorrowApiService.ts
-│   │   └── types
-│   │       └── index.ts
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── README.md
-├── frontend
-│   ├── public
-│   │   └── index.html
-│   ├── src
-│   │   ├── App.tsx
-│   │   ├── components
-│   │   │   └── WeatherAlert.tsx
-│   │   ├── services
-│   │   │   └── api.ts
-│   │   ├── types
-│   │   │   └── index.ts
-│   │   └── styles
-│   │       └── App.css
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── README.md
-├── .gitignore
-└── README.md
+weather-alert-system/
+├── .github/workflows/ci.yml    # GitHub Actions CI
+├── docker-compose.yml           # One-command setup
+├── backend/
+│   ├── prisma/schema.prisma     # Database models (User, Alert, Evaluation, Notification)
+│   └── src/
+│       ├── controllers/         # Auth, Alert, Weather, Notification controllers
+│       ├── middleware/           # Auth JWT, error handler, rate limiter
+│       ├── routes/              # Express routes with Swagger annotations
+│       ├── services/            # Weather, AlertEvaluation, Socket, Notification
+│       ├── utils/               # Zod schemas, validators, constants
+│       └── swagger.ts           # OpenAPI spec
+├── frontend/
+│   └── src/
+│       ├── components/
+│       │   ├── ui/              # Button, Card, Input, Select, Badge, Modal, Skeleton, EmptyState
+│       │   ├── charts/          # AlertTrendChart (Recharts)
+│       │   ├── ErrorBoundary.tsx
+│       │   └── Footer.tsx
+│       ├── context/             # AuthContext, SocketContext
+│       ├── pages/               # Dashboard, Weather, Alerts, Status, Login, Register, 404
+│       ├── services/api.ts      # Axios client with auth interceptor
+│       └── types/index.ts       # Shared TypeScript interfaces
+└── agents/                      # AI agent skills & conventions
 ```
 
-## Backend Setup
-1. Navigate to the `backend` directory.
-2. Install dependencies:
-   ```
-   npm install
-   ```
-3. Create a `.env` file and add your Tomorrow.io API key:
-   ```
-   TOMORROW_API_KEY=your_api_key_here
-   ```
-4. Start the server:
-   ```
-   npm run start
-   ```
+## Testing
 
-## Frontend Setup
-1. Navigate to the `frontend` directory.
-2. Install dependencies:
-   ```
-   npm install
-   ```
-3. Start the React application:
-   ```
-   npm run start
-   ```
+```bash
+# Backend unit tests
+cd backend && npm test
 
-## Deployment
-### Frontend
-To deploy the frontend on GitHub Pages:
-1. Build the application:
-   ```
-   npm run build
-   ```
-2. Deploy to GitHub Pages:
-   ```
-   npm run deploy
-   ```
+# With coverage
+npm run test:coverage
 
-### Backend
-For backend deployment, consider using services like Heroku, AWS, or DigitalOcean. Follow their respective documentation for deployment steps.
+# Frontend tests
+cd frontend && npm test
+```
 
-## Contributing
-Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
+## API Overview
+
+| Method | Endpoint                      | Auth | Description             |
+| ------ | ----------------------------- | ---- | ----------------------- |
+| POST   | `/api/auth/register`          | —    | Create account          |
+| POST   | `/api/auth/login`             | —    | Get JWT token           |
+| GET    | `/api/auth/me`                | ✅   | Current user            |
+| GET    | `/api/weather?location=`      | —    | Weather data            |
+| GET    | `/api/alerts`                 | opt  | List alerts (paginated) |
+| POST   | `/api/alerts`                 | opt  | Create alert            |
+| DELETE | `/api/alerts/:id`             | opt  | Delete alert            |
+| GET    | `/api/alerts/stats`           | opt  | Aggregate statistics    |
+| GET    | `/api/alerts/:id/history`     | opt  | Evaluation history      |
+| GET    | `/api/notifications`          | ✅   | User notifications      |
+| PATCH  | `/api/notifications/:id/read` | ✅   | Mark as read            |
+
+Full interactive docs: `/api/docs`
+
+## Design Decisions
+
+- **Compound Components** (Card) — Flexible, composable UI building blocks
+- **Explicit Variants** (Button, Badge) — Type-safe styling via variant props, no boolean soup
+- **Zod Validation** — Shared schema validation on both frontend and backend boundaries
+- **Optional Auth** — Alerts work for anonymous users; auth adds ownership + notifications
+- **WebSocket + Fallback** — Socket.io for real-time with periodic polling fallback
+- **Error Boundaries** — Graceful error recovery in React component tree
 
 ## License
-This project is licensed under the MIT License. See the LICENSE file for details.
+
+MIT

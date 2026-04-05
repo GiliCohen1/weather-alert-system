@@ -1,7 +1,17 @@
 import nodemailer from "nodemailer";
 
 export class NotificationService {
-  private transporter!: nodemailer.Transporter;
+  private transporter: nodemailer.Transporter | null = null;
+  private initPromise: Promise<void> | null = null;
+
+  private async ensureTransporter(): Promise<nodemailer.Transporter> {
+    if (this.transporter) return this.transporter;
+    if (!this.initPromise) {
+      this.initPromise = this.init();
+    }
+    await this.initPromise;
+    return this.transporter!;
+  }
 
   async init() {
     const testAccount = await nodemailer.createTestAccount();
@@ -31,7 +41,8 @@ export class NotificationService {
     observedValue: number;
   }) {
     try {
-      const info = await this.transporter.sendMail({
+      const transporter = await this.ensureTransporter();
+      const info = await transporter.sendMail({
         from: '"Weather Alert System" <test@ethereal.email>',
         to: "test@ethereal.email",
         subject: `Weather Alert: ${alert.name || alert.id}`,
@@ -45,7 +56,7 @@ export class NotificationService {
 
       console.log(
         "Test email sent! Preview URL:",
-        nodemailer.getTestMessageUrl(info)
+        nodemailer.getTestMessageUrl(info),
       );
     } catch (error) {
       console.error("Failed to send notification:", error);

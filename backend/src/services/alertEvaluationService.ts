@@ -5,6 +5,7 @@ import {
 } from "../types";
 import { WeatherService } from "./weatherService";
 import { NotificationService } from "./notificationService";
+import { SocketService } from "./socketService";
 import prisma from "../db";
 import schedule from "node-schedule";
 import {
@@ -39,14 +40,14 @@ export class AlertEvaluationService {
     const observedValue = Number(rawValue);
     if (isNaN(observedValue)) {
       throw new Error(
-        `Observed value for ${alert.parameter} is not a valid number: ${rawValue}`
+        `Observed value for ${alert.parameter} is not a valid number: ${rawValue}`,
       );
     }
 
     const triggered = this.evaluateCondition(
       observedValue,
       alert.operator,
-      alert.threshold
+      alert.threshold,
     );
 
     return await this.prisma.alertEvaluation.create({
@@ -63,7 +64,7 @@ export class AlertEvaluationService {
   private evaluateCondition(
     value: number,
     operator: string,
-    threshold: number
+    threshold: number,
   ): boolean {
     switch (operator) {
       case ">":
@@ -83,7 +84,7 @@ export class AlertEvaluationService {
 
   /** Run scheduled evaluation using node-schedule */
   async startScheduledEvaluation(
-    intervalMinutes: number = DEFAULT_EVALUATION_INTERVAL_MINUTES
+    intervalMinutes: number = DEFAULT_EVALUATION_INTERVAL_MINUTES,
   ) {
     if (this.job) this.job.cancel();
 
@@ -113,9 +114,35 @@ export class AlertEvaluationService {
                 evaluation.triggered &&
                 previousState !== evaluation.triggered
               ) {
-                await this.notificationService.sendAlertNotification(
-                  this.buildNotificationPayload(weatherAlert, evaluation)
+                const payload = this.buildNotificationPayload(
+                  weatherAlert,
+                  evaluation,
                 );
+                await this.notificationService.sendAlertNotification(payload);
+
+                // Emit real-time socket event
+                SocketService.getInstance().emitAlertTriggered({
+                  ...payload,
+                  userId: alert.userId ?? undefined,
+                });
+
+                // Create in-app notification if user exists
+                if (alert.userId) {
+                  const message = `Alert "${alert.name || alert.id}" triggered: ${weatherAlert.parameter} is ${evaluation.observedValue} (threshold: ${weatherAlert.threshold})`;
+                  const notification = await this.prisma.notification.create({
+                    data: {
+                      userId: alert.userId,
+                      alertId: alert.id,
+                      message,
+                    },
+                  });
+                  SocketService.getInstance().emitNotification(alert.userId, {
+                    id: notification.id,
+                    message: notification.message,
+                    alertId: notification.alertId,
+                    createdAt: notification.createdAt,
+                  });
+                }
               }
             } catch (error) {
               console.error(`Failed to evaluate alert ${alert.id}:`, error);
@@ -124,7 +151,7 @@ export class AlertEvaluationService {
         } catch (error) {
           console.error("Failed to run scheduled evaluation:", error);
         }
-      }
+      },
     );
   }
 
@@ -133,6 +160,52 @@ export class AlertEvaluationService {
       this.job.cancel();
       this.job = null;
     }
+  }
+
+  /** Evaluate a single alert by ID (for immediate / manual evaluation) */
+  async evaluateSingleAlert(alertId: string): Promise<AlertEvaluation> {
+    const alert = await this.prisma.alert.findUnique({
+      where: { id: alertId },
+      include: {
+        evaluations: { orderBy: { evaluatedAt: "desc" }, take: 1 },
+      },
+    });
+
+    if (!alert) throw new Error(`Alert ${alertId} not found`);
+
+    const weatherAlert = this.mapPrismaAlert(alert);
+    const evaluation = await this.evaluateAlert(weatherAlert);
+
+    // Notify if state changed to triggered
+    const previousState = alert.evaluations[0]?.triggered;
+    if (evaluation.triggered && previousState !== evaluation.triggered) {
+      const payload = this.buildNotificationPayload(weatherAlert, evaluation);
+      await this.notificationService.sendAlertNotification(payload);
+
+      SocketService.getInstance().emitAlertTriggered({
+        ...payload,
+        userId: alert.userId ?? undefined,
+      });
+
+      if (alert.userId) {
+        const message = `Alert "${alert.name || alert.id}" triggered: ${weatherAlert.parameter} is ${evaluation.observedValue} (threshold: ${weatherAlert.threshold})`;
+        const notification = await this.prisma.notification.create({
+          data: {
+            userId: alert.userId,
+            alertId: alert.id,
+            message,
+          },
+        });
+        SocketService.getInstance().emitNotification(alert.userId, {
+          id: notification.id,
+          message: notification.message,
+          alertId: notification.alertId,
+          createdAt: notification.createdAt,
+        });
+      }
+    }
+
+    return evaluation;
   }
 
   /** Convert Prisma alert model to WeatherAlert type */
@@ -148,13 +221,14 @@ export class AlertEvaluationService {
       operator: alert.operator,
       threshold: alert.threshold,
       description: alert.description ?? undefined,
+      userId: alert.userId ?? undefined,
     };
   }
 
   /** Build notification payload */
   private buildNotificationPayload(
     alert: WeatherAlert,
-    evaluation: AlertEvaluation
+    evaluation: AlertEvaluation,
   ): AlertNotificationPayload {
     return {
       id: alert.id!,
