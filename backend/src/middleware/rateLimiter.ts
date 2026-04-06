@@ -1,6 +1,6 @@
 import rateLimit from "express-rate-limit";
 
-/** General API rate limiter — 100 requests per 15 minutes */
+/** General API rate limiter - 100 requests per 15 minutes */
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -18,13 +18,13 @@ export const apiLimiter = rateLimit({
     res.status(429).json({
       status: "error",
       code: "RATE_LIMIT",
-      message: `Too many requests — limit is ${options.max} per ${options.windowMs / 60000} minutes. Please wait before trying again.`,
+      message: `Too many requests - limit is ${options.max} per ${options.windowMs / 60000} minutes. Please wait before trying again.`,
       retryAfterSeconds: retryAfter,
     });
   },
 });
 
-/** Stricter limiter for auth endpoints — 10 attempts per 15 minutes */
+/** Stricter limiter for auth endpoints - 10 attempts per 15 minutes */
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -43,7 +43,7 @@ export const authLimiter = rateLimit({
   },
 });
 
-/** Weather endpoint limiter — 25 requests per 15 minutes (protects Tomorrow.io quota) */
+/** Weather endpoint limiter - 25 requests per 15 minutes (protects Tomorrow.io quota) */
 export const weatherLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 25,

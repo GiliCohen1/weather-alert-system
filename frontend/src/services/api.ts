@@ -35,9 +35,77 @@ let rateLimitUntil = 0;
 
 export const isRateLimited = () => Date.now() < rateLimitUntil;
 
-// Response interceptor — handle 429 with informative toasts
+// Rate limit remaining info for UI display
+export interface RateLimitEntry {
+  remaining: number;
+  limit: number;
+}
+export interface RateLimitInfo {
+  /** The most restrictive active limit (lowest remaining/limit ratio) */
+  active: RateLimitEntry | null;
+  /** True when the external weather provider (Tomorrow.io) has hit its own quota */
+  providerLimited: boolean;
+}
+type RateLimitListener = (info: RateLimitInfo) => void;
+
+// Track per-bucket internally, expose the most restrictive one
+const buckets: Record<string, RateLimitEntry> = {};
+let providerLimited = false;
+const rateLimitListeners = new Set<RateLimitListener>();
+
+const broadcastRateLimit = () => {
+  const entries = Object.values(buckets);
+  // Pick the bucket with the lowest remaining-to-limit ratio (most constrained)
+  let active: RateLimitEntry | null = null;
+  let lowestRatio = Infinity;
+  for (const e of entries) {
+    const ratio = e.limit > 0 ? e.remaining / e.limit : 0;
+    if (ratio < lowestRatio) {
+      lowestRatio = ratio;
+      active = e;
+    }
+  }
+  const info: RateLimitInfo = { active, providerLimited };
+  rateLimitListeners.forEach((l) => l(info));
+};
+
+export const getRateLimitInfo = (): RateLimitInfo => {
+  const entries = Object.values(buckets);
+  let active: RateLimitEntry | null = null;
+  let lowestRatio = Infinity;
+  for (const e of entries) {
+    const ratio = e.limit > 0 ? e.remaining / e.limit : 0;
+    if (ratio < lowestRatio) {
+      lowestRatio = ratio;
+      active = e;
+    }
+  }
+  return { active, providerLimited };
+};
+export const onRateLimitChange = (listener: RateLimitListener) => {
+  rateLimitListeners.add(listener);
+  return () => {
+    rateLimitListeners.delete(listener);
+  };
+};
+
+// Response interceptor - extract rate limit headers + handle 429
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const remaining = response.headers["ratelimit-remaining"];
+    const limit = response.headers["ratelimit-limit"];
+    if (remaining != null && limit != null) {
+      const entry = {
+        remaining: parseInt(remaining, 10),
+        limit: parseInt(limit, 10),
+      };
+      // Use the limit number as a bucket key so each distinct limiter is tracked separately
+      const bucketKey = String(entry.limit);
+      buckets[bucketKey] = entry;
+      broadcastRateLimit();
+    }
+    return response;
+  },
   (
     error: AxiosError<{
       message?: string;
@@ -62,9 +130,16 @@ api.interceptors.response.use(
       let description: string;
 
       if (isUpstream) {
-        title = "Weather Provider Limit";
+        providerLimited = true;
+        broadcastRateLimit();
+        // Auto-clear after retry period
+        setTimeout(() => {
+          providerLimited = false;
+          broadcastRateLimit();
+        }, retrySeconds * 1000);
+        title = "External Weather Provider Limit";
         description =
-          "The weather data provider is temporarily unavailable. Please try again in a few minutes.";
+          "Tomorrow.io (the external weather data provider) has reached its daily quota. This is separate from your app rate limit. Please try again later.";
       } else if (isWeather) {
         title = "Weather Request Limit";
         description = `You've made too many weather requests. Please wait ~${Math.ceil(retrySeconds / 60)} minute(s).`;
@@ -118,6 +193,24 @@ export const authApi = {
 
   getMe: async (): Promise<User> => {
     const { data } = await api.get("/auth/me");
+    return data;
+  },
+
+  forgotPassword: async (
+    email: string,
+  ): Promise<{ message: string; resetUrl?: string }> => {
+    const { data } = await api.post("/auth/forgot-password", { email });
+    return data;
+  },
+
+  resetPassword: async (
+    token: string,
+    newPassword: string,
+  ): Promise<{ message: string }> => {
+    const { data } = await api.post("/auth/reset-password", {
+      token,
+      newPassword,
+    });
     return data;
   },
 };

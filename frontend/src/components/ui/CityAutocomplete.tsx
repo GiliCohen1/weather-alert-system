@@ -54,7 +54,7 @@ const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
     onChange(val);
     setActiveIndex(-1);
 
-    // Fetch suggestions as user types (debounced) — no action request yet
+    // Fetch suggestions as user types (debounced) - no action request yet
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (val.trim().length >= 2) {
       debounceRef.current = setTimeout(() => fetchSuggestions(val), 300);
@@ -83,10 +83,10 @@ const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
         // Select highlighted suggestion
         handleSelect(suggestions[activeIndex]);
       } else if (showDropdown && suggestions.length > 0) {
-        // Dropdown open but nothing highlighted — select the first one
+        // Dropdown open but nothing highlighted - select the first one
         handleSelect(suggestions[0]);
       } else {
-        // No dropdown visible — submit raw text
+        // No dropdown visible - submit raw text
         onSubmit?.(value);
       }
       return;

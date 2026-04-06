@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   AreaChart,
   Area,
@@ -21,15 +21,19 @@ const AlertTrendChart: React.FC<AlertTrendChartProps> = ({
   threshold,
   parameter,
 }) => {
-  const data = [...evaluations].reverse().map((e) => ({
-    time: new Date(e.evaluatedAt).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-    value: e.observedValue,
-    threshold,
-    triggered: e.triggered,
-  }));
+  const data = useMemo(
+    () =>
+      [...evaluations].reverse().map((e) => ({
+        time: new Date(e.evaluatedAt).toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        value: e.observedValue,
+        threshold,
+        triggered: e.triggered,
+      })),
+    [evaluations, threshold],
+  );
 
   if (data.length === 0) {
     return (

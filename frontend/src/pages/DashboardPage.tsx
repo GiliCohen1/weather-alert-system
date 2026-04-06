@@ -40,12 +40,32 @@ const DashboardPage: React.FC = () => {
       setWeather(weatherData);
       setStats(statsData);
       setAlerts(alertsData.data);
-    } catch (err) {
-      console.error("Dashboard fetch error:", err);
+    } catch (err: any) {
+      if (!err?._rateLimitHandled) {
+        toast.error("Failed to load dashboard data", { id: "dashboard-error" });
+      }
     } finally {
       setLoading(false);
     }
   }, [location]);
+
+  const handleEvaluate = useCallback(
+    async (id: string) => {
+      setEvaluatingId(id);
+      try {
+        await weatherApi.evaluateAlert(id);
+        toast.success("Alert evaluated");
+        fetchData();
+      } catch (err: any) {
+        if (!err?._rateLimitHandled) {
+          toast.error("Evaluation failed");
+        }
+      } finally {
+        setEvaluatingId(null);
+      }
+    },
+    [fetchData],
+  );
 
   useEffect(() => {
     fetchData();
@@ -336,21 +356,7 @@ const DashboardPage: React.FC = () => {
                       variant="secondary"
                       size="sm"
                       disabled={evaluatingId === alert.id}
-                      onClick={async () => {
-                        if (!alert.id) return;
-                        setEvaluatingId(alert.id);
-                        try {
-                          await weatherApi.evaluateAlert(alert.id);
-                          toast.success("Alert evaluated");
-                          fetchData();
-                        } catch (err: any) {
-                          if (!err?._rateLimitHandled) {
-                            toast.error("Evaluation failed");
-                          }
-                        } finally {
-                          setEvaluatingId(null);
-                        }
-                      }}
+                      onClick={() => alert.id && handleEvaluate(alert.id)}
                       title="Evaluate now"
                     >
                       <RefreshCw

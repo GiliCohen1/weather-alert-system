@@ -35,7 +35,7 @@ const AlertStatusCard: React.FC<AlertStatusCardProps> = ({
   const severity = getSeverity();
 
   const severityStyles = {
-    critical: "border-l-danger-500 bg-danger-50 dark:bg-danger-900/20",
+    critical: "border-l-danger-600 bg-danger-200 dark:bg-danger-950/70",
     warning: "border-l-yellow-500 bg-yellow-50 dark:bg-yellow-900/20",
     info: "border-l-primary-400 bg-primary-50 dark:bg-primary-900/10",
   };
@@ -73,7 +73,13 @@ const AlertStatusCard: React.FC<AlertStatusCardProps> = ({
                 className="text-danger-500 animate-pulse flex-shrink-0"
               />
             )}
-            <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+              <h3
+                className={`font-semibold ${
+                  isTriggered && severity === "critical"
+                    ? "text-danger-950 dark:text-danger-50"
+                    : "text-gray-900 dark:text-gray-100"
+                }`}
+              >
               {alert.name || "Unnamed Alert"}
             </h3>
             <Badge

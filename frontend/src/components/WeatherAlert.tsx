@@ -116,7 +116,7 @@ const WeatherAlertForm: React.FC<Props> = ({ onCreated }) => {
 
   return (
     <div>
-      {/* Step indicator — compact pill bar */}
+      {/* Step indicator - compact pill bar */}
       <div className="flex items-center gap-2 mb-4">
         {STEPS.map((s, i) => (
           <React.Fragment key={i}>
@@ -141,7 +141,7 @@ const WeatherAlertForm: React.FC<Props> = ({ onCreated }) => {
         ))}
       </div>
 
-      {/* Step 1: Setup — location + condition in grid */}
+      {/* Step 1: Setup - location + condition in grid */}
       {step === 0 && (
         <div className="animate-fadeIn space-y-3">
           {/* Top row: name + location type */}

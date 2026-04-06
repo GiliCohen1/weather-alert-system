@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -54,32 +54,36 @@ const WeatherForecastChart: React.FC<WeatherForecastChartProps> = ({
 
   const isAll = activeParam === "all";
 
-  const data = intervals.map((iv) => {
-    const time =
-      timestep === "1h"
-        ? new Date(iv.time).toLocaleString("en-US", {
-            weekday: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        : new Date(iv.time).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          });
-    if (isAll) {
-      return {
-        time,
-        temperature: iv.temperature,
-        windSpeed: iv.windSpeed,
-        humidity: iv.humidity,
-        precipitationProbability: iv.precipitationProbability,
-      };
-    }
-    return {
-      time,
-      value: iv[activeParam as ForecastParam],
-    };
-  });
+  const data = useMemo(
+    () =>
+      intervals.map((iv) => {
+        const time =
+          timestep === "1h"
+            ? new Date(iv.time).toLocaleString("en-US", {
+                weekday: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : new Date(iv.time).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              });
+        if (isAll) {
+          return {
+            time,
+            temperature: iv.temperature,
+            windSpeed: iv.windSpeed,
+            humidity: iv.humidity,
+            precipitationProbability: iv.precipitationProbability,
+          };
+        }
+        return {
+          time,
+          value: iv[activeParam as ForecastParam],
+        };
+      }),
+    [intervals, timestep, activeParam],
+  );
 
   if (data.length === 0) {
     return (

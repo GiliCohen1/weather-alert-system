@@ -29,15 +29,15 @@ graph TB
 
 ## Features
 
-- **Dashboard** — Overview stats, weather metrics, system health
-- **Weather Explorer** — Multi-location comparison with real-time data
-- **Alert Wizard** — 3-step form (Location → Condition → Review) for creating monitors
-- **Live Status** — WebSocket-powered real-time alert monitoring with timeline feed
-- **Auth System** — JWT-based registration/login with protected routes
-- **Notifications** — In-app notification bell with unread count
-- **Dark Mode** — System-preference-aware theme toggle
-- **API Docs** — Interactive Swagger UI at `/api/docs`
-- **Responsive** — Mobile-first design with hamburger navigation
+- **Dashboard** - Overview stats, weather metrics, system health
+- **Weather Explorer** - Multi-location comparison with real-time data
+- **Alert Wizard** - 3-step form (Location → Condition → Review) for creating monitors
+- **Live Status** - WebSocket-powered real-time alert monitoring with timeline feed
+- **Auth System** - JWT-based registration/login with protected routes
+- **Notifications** - In-app notification bell with unread count
+- **Dark Mode** - System-preference-aware theme toggle
+- **API Docs** - Interactive Swagger UI at `/api/docs`
+- **Responsive** - Mobile-first design with hamburger navigation
 
 ## Tech Stack
 
@@ -163,10 +163,10 @@ cd frontend && npm test
 
 | Method | Endpoint                      | Auth | Description             |
 | ------ | ----------------------------- | ---- | ----------------------- |
-| POST   | `/api/auth/register`          | —    | Create account          |
-| POST   | `/api/auth/login`             | —    | Get JWT token           |
+| POST   | `/api/auth/register`          | -    | Create account          |
+| POST   | `/api/auth/login`             | -    | Get JWT token           |
 | GET    | `/api/auth/me`                | ✅   | Current user            |
-| GET    | `/api/weather?location=`      | —    | Weather data            |
+| GET    | `/api/weather?location=`      | -    | Weather data            |
 | GET    | `/api/alerts`                 | opt  | List alerts (paginated) |
 | POST   | `/api/alerts`                 | opt  | Create alert            |
 | DELETE | `/api/alerts/:id`             | opt  | Delete alert            |
@@ -179,12 +179,12 @@ Full interactive docs: `/api/docs`
 
 ## Design Decisions
 
-- **Compound Components** (Card) — Flexible, composable UI building blocks
-- **Explicit Variants** (Button, Badge) — Type-safe styling via variant props, no boolean soup
-- **Zod Validation** — Shared schema validation on both frontend and backend boundaries
-- **Optional Auth** — Alerts work for anonymous users; auth adds ownership + notifications
-- **WebSocket + Fallback** — Socket.io for real-time with periodic polling fallback
-- **Error Boundaries** — Graceful error recovery in React component tree
+- **Compound Components** (Card) - Flexible, composable UI building blocks
+- **Explicit Variants** (Button, Badge) - Type-safe styling via variant props, no boolean soup
+- **Zod Validation** - Shared schema validation on both frontend and backend boundaries
+- **Optional Auth** - Alerts work for anonymous users; auth adds ownership + notifications
+- **WebSocket + Fallback** - Socket.io for real-time with periodic polling fallback
+- **Error Boundaries** - Graceful error recovery in React component tree
 
 ## License
 

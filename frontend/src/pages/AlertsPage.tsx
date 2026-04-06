@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Bell,
   Plus,
@@ -105,22 +105,27 @@ const AlertsPage: React.FC = () => {
   };
 
   // Filter & sort
-  const filteredAlerts = alerts
-    .filter((a) => {
-      if (filterStatus === "triggered") return a.evaluations?.[0]?.triggered;
-      if (filterStatus === "active") return !a.evaluations?.[0]?.triggered;
-      return true;
-    })
-    .sort((a, b) => {
-      const dir = sortAsc ? 1 : -1;
-      if (sortField === "createdAt") {
-        return dir * (a.createdAt || "").localeCompare(b.createdAt || "");
-      }
-      if (sortField === "name") {
-        return dir * (a.name || "").localeCompare(b.name || "");
-      }
-      return dir * a.parameter.localeCompare(b.parameter);
-    });
+  const filteredAlerts = useMemo(
+    () =>
+      alerts
+        .filter((a) => {
+          if (filterStatus === "triggered")
+            return a.evaluations?.[0]?.triggered;
+          if (filterStatus === "active") return !a.evaluations?.[0]?.triggered;
+          return true;
+        })
+        .sort((a, b) => {
+          const dir = sortAsc ? 1 : -1;
+          if (sortField === "createdAt") {
+            return dir * (a.createdAt || "").localeCompare(b.createdAt || "");
+          }
+          if (sortField === "name") {
+            return dir * (a.name || "").localeCompare(b.name || "");
+          }
+          return dir * a.parameter.localeCompare(b.parameter);
+        }),
+    [alerts, filterStatus, sortField, sortAsc],
+  );
 
   return (
     <div className="container">
@@ -175,6 +180,7 @@ const AlertsPage: React.FC = () => {
             <button
               key={f}
               onClick={() => setFilterStatus(f)}
+              aria-pressed={filterStatus === f}
               className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                 filterStatus === f
                   ? "bg-primary-600 text-white"

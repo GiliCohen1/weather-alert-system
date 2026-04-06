@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import prisma from "../db";
 import { createAlertSchema, paginationSchema } from "../utils/schemas";
 import { AuthRequest } from "../middleware/authMiddleware";
@@ -66,9 +66,10 @@ export default class AlertController {
       const { page, limit } = paginationSchema.parse(req.query);
       const skip = (page - 1) * limit;
 
+      // Authenticated: show own alerts + public; Unauthenticated: public only
       const where = req.userId
         ? { OR: [{ userId: req.userId }, { userId: null }] }
-        : {};
+        : { userId: null };
 
       const [alerts, total] = await Promise.all([
         prisma.alert.findMany({
@@ -108,7 +109,7 @@ export default class AlertController {
     try {
       const where = req.userId
         ? { OR: [{ userId: req.userId }, { userId: null }] }
-        : {};
+        : { userId: null };
 
       const [totalAlerts, alertsWithEvals] = await Promise.all([
         prisma.alert.count({ where }),
@@ -162,9 +163,23 @@ export default class AlertController {
     }
   };
 
-  getAlertHistory = async (req: Request, res: Response, next: NextFunction) => {
+  getAlertHistory = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
       const { id } = req.params;
+
+      // Verify alert exists and belongs to the requesting user
+      const alert = await prisma.alert.findUnique({ where: { id } });
+      if (!alert) {
+        throw new AppError(404, "Alert not found");
+      }
+      if (alert.userId && alert.userId !== req.userId) {
+        throw new AppError(403, "You do not have access to this alert");
+      }
+
       const { page, limit } = paginationSchema.parse(req.query);
       const skip = (page - 1) * limit;
 
@@ -192,9 +207,19 @@ export default class AlertController {
     }
   };
 
-  deleteAlert = async (req: Request, res: Response, next: NextFunction) => {
+  deleteAlert = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
+
+      // Verify ownership before deletion
+      const alert = await prisma.alert.findUnique({ where: { id } });
+      if (!alert) {
+        throw new AppError(404, "Alert not found");
+      }
+      if (alert.userId !== req.userId) {
+        throw new AppError(403, "You can only delete your own alerts");
+      }
+
       await prisma.alert.delete({ where: { id } });
       SocketService.getInstance().emitAlertDeleted(id);
       res.status(204).send();
@@ -203,9 +228,23 @@ export default class AlertController {
     }
   };
 
-  evaluateAlert = async (req: Request, res: Response, next: NextFunction) => {
+  evaluateAlert = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
       const { id } = req.params;
+
+      // Verify ownership before evaluation
+      const alert = await prisma.alert.findUnique({ where: { id } });
+      if (!alert) {
+        throw new AppError(404, "Alert not found");
+      }
+      if (alert.userId && alert.userId !== req.userId) {
+        throw new AppError(403, "You do not have access to this alert");
+      }
+
       const evaluation = await alertEvaluationService.evaluateSingleAlert(id);
       res.json(evaluation);
     } catch (error) {

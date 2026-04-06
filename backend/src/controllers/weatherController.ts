@@ -90,7 +90,6 @@ export default class WeatherController {
           ? "Weather API rate limit exceeded. Please try again shortly."
           : "Failed to fetch weather data",
         code: isUpstreamRateLimit ? "UPSTREAM_RATE_LIMIT" : "FETCH_ERROR",
-        details: error.response?.data || error.message,
       });
     }
   };
@@ -121,7 +120,6 @@ export default class WeatherController {
           ? "Weather API rate limit exceeded. Please try again shortly."
           : "Failed to fetch forecast data",
         code: isUpstreamRateLimit ? "UPSTREAM_RATE_LIMIT" : "FETCH_ERROR",
-        details: error.response?.data || error.message,
       });
     }
   };
@@ -171,7 +169,6 @@ export default class WeatherController {
           ? "Weather API rate limit exceeded. Please try again shortly."
           : "Failed to fetch weather history",
         code: isUpstreamRateLimit ? "UPSTREAM_RATE_LIMIT" : "FETCH_ERROR",
-        details: error.response?.data || error.message,
       });
     }
   };

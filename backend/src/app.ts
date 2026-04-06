@@ -11,6 +11,7 @@ import { SocketService } from "./services/socketService";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import { apiLimiter } from "./middleware/rateLimiter";
 import { setupSwagger } from "./swagger";
+import prisma from "./db";
 
 const app = express();
 const httpServer = createServer(app);
@@ -21,7 +22,17 @@ socketService.initialize(httpServer);
 
 // Security middleware
 app.use(helmet());
-app.use(cors({ origin: config.CORS_ORIGIN, credentials: true }));
+app.use(
+  cors({
+    origin: config.CORS_ORIGIN,
+    credentials: true,
+    exposedHeaders: [
+      "RateLimit-Limit",
+      "RateLimit-Remaining",
+      "RateLimit-Reset",
+    ],
+  }),
+);
 app.use(express.json({ limit: "10kb" }));
 
 // Logging
@@ -50,9 +61,11 @@ alertEvaluationService.startScheduledEvaluation(
 );
 
 // Graceful shutdown
-process.on("SIGTERM", () => {
+process.on("SIGTERM", async () => {
   console.log("Shutting down gracefully...");
   alertEvaluationService.stopScheduledEvaluation();
+  socketService.getIO()?.close();
+  await prisma.$disconnect();
   httpServer.close();
 });
 

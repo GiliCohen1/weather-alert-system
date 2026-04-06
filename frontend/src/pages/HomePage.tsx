@@ -25,6 +25,8 @@ interface LocationWeather {
   data: WeatherData;
 }
 
+const QUICK_ADD_CITIES = ["Tel Aviv", "New York", "London", "Tokyo", "Paris"];
+
 const WeatherPage: React.FC = () => {
   const [locations, setLocations] = useState<LocationWeather[]>([]);
   const [searchInput, setSearchInput] = useState("");
@@ -205,7 +207,7 @@ const WeatherPage: React.FC = () => {
           <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">
             Quick add:
           </span>
-          {["Tel Aviv", "New York", "London", "Tokyo", "Paris"].map((city) => (
+          {QUICK_ADD_CITIES.map((city) => (
             <button
               key={city}
               onClick={() => addLocation(city)}

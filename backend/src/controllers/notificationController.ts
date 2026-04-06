@@ -12,20 +12,21 @@ export default class NotificationController {
     try {
       const userId = req.userId!;
 
-      const notifications = await prisma.notification.findMany({
-        where: { userId },
-        orderBy: { createdAt: "desc" },
-        take: 50,
-        include: {
-          alert: {
-            select: { id: true, name: true, parameter: true },
+      const [notifications, unreadCount] = await Promise.all([
+        prisma.notification.findMany({
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+          take: 50,
+          include: {
+            alert: {
+              select: { id: true, name: true, parameter: true },
+            },
           },
-        },
-      });
-
-      const unreadCount = await prisma.notification.count({
-        where: { userId, read: false },
-      });
+        }),
+        prisma.notification.count({
+          where: { userId, read: false },
+        }),
+      ]);
 
       res.json({ notifications, unreadCount });
     } catch (error) {

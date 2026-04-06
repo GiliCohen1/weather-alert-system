@@ -177,7 +177,7 @@ router.get("/alerts/stats", optionalAuth, alertController.getAlertStats);
  *     responses:
  *       204: { description: Alert deleted }
  */
-router.delete("/alerts/:id", optionalAuth, alertController.deleteAlert);
+router.delete("/alerts/:id", authMiddleware, alertController.deleteAlert);
 
 /**
  * @swagger
@@ -195,7 +195,7 @@ router.delete("/alerts/:id", optionalAuth, alertController.deleteAlert);
  */
 router.post(
   "/alerts/:id/evaluate",
-  optionalAuth,
+  authMiddleware,
   alertController.evaluateAlert,
 );
 
@@ -221,7 +221,7 @@ router.post(
  */
 router.get(
   "/alerts/:id/history",
-  optionalAuth,
+  authMiddleware,
   alertController.getAlertHistory,
 );
 

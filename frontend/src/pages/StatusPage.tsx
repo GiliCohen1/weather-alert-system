@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { weatherApi, notificationApi } from "../services/api";
 import { WeatherAlert, Notification } from "../types";
 import { useSocket } from "../context/SocketContext";
@@ -17,6 +17,7 @@ import {
   Mail,
   MailOpen,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface TimelineEvent {
   id: string;
@@ -40,8 +41,10 @@ const StatusPage: React.FC = () => {
       const res = await weatherApi.getAlerts(1, 100);
       setAlerts(res.data);
       setLastUpdated(new Date());
-    } catch {
-      // silently fail
+    } catch (err: any) {
+      if (!err?._rateLimitHandled) {
+        toast.error("Failed to load alerts", { id: "status-alerts-error" });
+      }
     } finally {
       setLoading(false);
     }
@@ -58,8 +61,12 @@ const StatusPage: React.FC = () => {
       try {
         const data = await notificationApi.getNotifications();
         setNotifications(data.notifications);
-      } catch {
-        // silently fail
+      } catch (err: any) {
+        if (!err?._rateLimitHandled) {
+          toast.error("Failed to load notifications", {
+            id: "status-notif-error",
+          });
+        }
       }
     };
     fetchNotifications();
@@ -102,11 +109,21 @@ const StatusPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [fetchAlerts]);
 
-  const triggeredAlerts = alerts.filter((a) => a.evaluations?.[0]?.triggered);
-  const normalAlerts = alerts.filter(
-    (a) => a.evaluations?.length && !a.evaluations[0].triggered,
+  const triggeredAlerts = useMemo(
+    () => alerts.filter((a) => a.evaluations?.[0]?.triggered),
+    [alerts],
   );
-  const pendingAlerts = alerts.filter((a) => !a.evaluations?.length);
+  const normalAlerts = useMemo(
+    () =>
+      alerts.filter(
+        (a) => a.evaluations?.length && !a.evaluations[0].triggered,
+      ),
+    [alerts],
+  );
+  const pendingAlerts = useMemo(
+    () => alerts.filter((a) => !a.evaluations?.length),
+    [alerts],
+  );
 
   const formatTime = (d: Date) =>
     d.toLocaleTimeString("en-US", {

@@ -19,6 +19,8 @@ export class AlertEvaluationService {
   private notificationService: NotificationService;
   private prisma = prisma;
   private job: schedule.Job | null = null;
+  /** When set, upstream provider quota is exhausted — skip evaluations until this time */
+  private upstreamBackoffUntil: number = 0;
 
   constructor() {
     this.weatherService = new WeatherService();
@@ -96,6 +98,17 @@ export class AlertEvaluationService {
         });
         console.log(`Running scheduled evaluation at ${israelTime}`);
 
+        // Skip if upstream provider (Tomorrow.io) quota is exhausted
+        if (Date.now() < this.upstreamBackoffUntil) {
+          const minutesLeft = Math.ceil(
+            (this.upstreamBackoffUntil - Date.now()) / 60000,
+          );
+          console.log(
+            `Skipping evaluation — upstream provider rate-limited for ~${minutesLeft} more minute(s)`,
+          );
+          return;
+        }
+
         try {
           const alerts = await this.prisma.alert.findMany({
             include: {
@@ -144,7 +157,17 @@ export class AlertEvaluationService {
                   });
                 }
               }
-            } catch (error) {
+            } catch (error: any) {
+              // If upstream provider returned 429, back off and stop processing remaining alerts
+              if (error?.response?.status === 429) {
+                const backoffMinutes = 60; // default 1 hour backoff
+                this.upstreamBackoffUntil =
+                  Date.now() + backoffMinutes * 60 * 1000;
+                console.warn(
+                  `Upstream provider rate-limited — pausing evaluations for ${backoffMinutes} minutes`,
+                );
+                break;
+              }
               console.error(`Failed to evaluate alert ${alert.id}:`, error);
             }
           }

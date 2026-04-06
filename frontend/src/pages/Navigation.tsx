@@ -11,9 +11,21 @@ import {
   CloudLightning,
   LogOut,
   Cloud,
+  AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { notificationApi } from "../services/api";
+import {
+  notificationApi,
+  onRateLimitChange,
+  RateLimitInfo,
+} from "../services/api";
+
+const NAV_LINKS = [
+  { to: "/", label: "Dashboard", icon: Home },
+  { to: "/weather", label: "Weather", icon: Cloud },
+  { to: "/alerts", label: "Alerts", icon: Bell },
+  { to: "/status", label: "Status", icon: Activity },
+];
 
 const Navigation: React.FC = () => {
   const location = useLocation();
@@ -34,6 +46,15 @@ const Navigation: React.FC = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const profileRef = useRef<HTMLDivElement>(null);
+  const [rateLimits, setRateLimits] = useState<RateLimitInfo>({
+    active: null,
+    providerLimited: false,
+  });
+
+  // Subscribe to rate limit changes
+  useEffect(() => {
+    return onRateLimitChange(setRateLimits);
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
@@ -76,13 +97,6 @@ const Navigation: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const navLinks = [
-    { to: "/", label: "Dashboard", icon: Home },
-    { to: "/weather", label: "Weather", icon: Cloud },
-    { to: "/alerts", label: "Alerts", icon: Bell },
-    { to: "/status", label: "Status", icon: Activity },
-  ];
-
   const isActive = useMemo(
     () => (path: string) => location.pathname === path,
     [location.pathname],
@@ -107,7 +121,7 @@ const Navigation: React.FC = () => {
 
           {/* Desktop Nav Links */}
           <div className="hidden md:flex items-center gap-1">
-            {navLinks.map(({ to, label, icon: Icon }) => (
+            {NAV_LINKS.map(({ to, label, icon: Icon }) => (
               <Link
                 key={to}
                 to={to}
@@ -125,6 +139,34 @@ const Navigation: React.FC = () => {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
+            {/* Rate limit indicators */}
+            {rateLimits.providerLimited && (
+              <div
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-400"
+                title="Tomorrow.io (external weather provider) has reached its daily quota. Your app rate limit is fine."
+              >
+                <AlertTriangle size={12} />
+                Provider limit
+              </div>
+            )}
+            {rateLimits.active && (
+              <div
+                className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${
+                  rateLimits.active.remaining <=
+                  Math.ceil(rateLimits.active.limit * 0.1)
+                    ? "bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-400"
+                    : rateLimits.active.remaining <=
+                        Math.ceil(rateLimits.active.limit * 0.3)
+                      ? "bg-warning-50 dark:bg-warning-900/20 text-warning-700 dark:text-warning-400"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                }`}
+                title={`Requests remaining: ${rateLimits.active.remaining} of ${rateLimits.active.limit} (resets every 15 min)`}
+              >
+                <Activity size={12} />
+                {rateLimits.active.remaining}/{rateLimits.active.limit}
+              </div>
+            )}
+
             {/* Theme toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
@@ -226,7 +268,7 @@ const Navigation: React.FC = () => {
         {mobileOpen && (
           <div className="md:hidden py-3 border-t border-gray-200 dark:border-gray-800 animate-slideUp">
             <div className="space-y-1">
-              {navLinks.map(({ to, label, icon: Icon }) => (
+              {NAV_LINKS.map(({ to, label, icon: Icon }) => (
                 <Link
                   key={to}
                   to={to}

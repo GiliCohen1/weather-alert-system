@@ -32,7 +32,7 @@ export const authMiddleware = (
   }
 };
 
-/** Optional auth — attaches userId if token present, but doesn't block */
+/** Optional auth - attaches userId if token present, but doesn't block */
 export const optionalAuth = (
   req: AuthRequest,
   _res: Response,
@@ -48,7 +48,7 @@ export const optionalAuth = (
       };
       req.userId = decoded.userId;
     } catch {
-      // Token invalid — continue without user
+      // Token invalid - continue without user
     }
   }
 

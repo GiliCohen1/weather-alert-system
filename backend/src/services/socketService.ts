@@ -1,5 +1,6 @@
 import { Server as HttpServer } from "http";
 import { Server, Socket } from "socket.io";
+import jwt from "jsonwebtoken";
 import { config } from "../config";
 
 export class SocketService {
@@ -27,7 +28,28 @@ export class SocketService {
       console.log(`Client connected: ${socket.id}`);
 
       socket.on("join:user", (userId: string) => {
-        socket.join(`user:${userId}`);
+        // Validate JWT before allowing user to join their room
+        const token =
+          socket.handshake.auth?.token ||
+          socket.handshake.headers?.authorization?.replace("Bearer ", "");
+
+        if (!token) {
+          socket.emit("error", { message: "Authentication required" });
+          return;
+        }
+
+        try {
+          const decoded = jwt.verify(token, config.JWT_SECRET) as {
+            userId: string;
+          };
+          if (decoded.userId !== userId) {
+            socket.emit("error", { message: "Unauthorized" });
+            return;
+          }
+          socket.join(`user:${userId}`);
+        } catch {
+          socket.emit("error", { message: "Invalid token" });
+        }
       });
 
       socket.on("disconnect", () => {

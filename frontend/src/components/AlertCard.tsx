@@ -155,4 +155,4 @@ const AlertCard: React.FC<AlertCardProps> = ({
   );
 };
 
-export default AlertCard;
+export default React.memo(AlertCard);
