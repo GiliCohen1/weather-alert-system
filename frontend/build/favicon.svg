@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="cloud" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <linearGradient id="bolt" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fcd34d"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <!-- Sun behind cloud -->
+  <circle cx="46" cy="20" r="10" fill="url(#sun)" opacity="0.9"/>
+  <!-- Cloud body -->
+  <path d="M16 44c-5.5 0-10-4.5-10-10 0-4.8 3.4-8.8 8-9.8C15.2 17.5 21 12 28 12c8.3 0 15 6.3 15.8 14.3C48.5 27.5 52 31.7 52 37c0 5.5-4.5 10-10 10H16z" fill="url(#cloud)"/>
+  <!-- Lightning bolt -->
+  <polygon points="30,30 24,42 30,42 26,54 38,38 32,38 36,30" fill="url(#bolt)"/>
+</svg>

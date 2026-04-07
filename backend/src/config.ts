@@ -1,13 +1,24 @@
 import dotenv from "dotenv";
+import { z } from "zod";
+
 dotenv.config();
 
-export const config = {
-  PORT: process.env.PORT || 5000,
-  TOMORROW_API_KEY: process.env.TOMORROW_API_KEY || "",
-  TOMORROW_BASE_URL:
-    process.env.TOMORROW_BASE_URL || "https://api.tomorrow.io/v4",
-  SMTP_HOST: process.env.SMTP_HOST,
-  SMTP_PORT: process.env.SMTP_PORT,
-  SMTP_USER: process.env.SMTP_USER,
-  SMTP_PASS: process.env.SMTP_PASS,
-};
+const envSchema = z.object({
+  PORT: z.coerce.number().default(5000),
+  DATABASE_URL: z.string().optional(),
+  TOMORROW_API_KEY: z.string().default(""),
+  TOMORROW_BASE_URL: z.string().default("https://api.tomorrow.io/v4"),
+  JWT_SECRET: z.string().default("dev-secret-change-in-production"),
+  JWT_EXPIRES_IN: z.string().default("7d"),
+  CORS_ORIGIN: z.string().default("http://localhost:3000"),
+  EVALUATION_INTERVAL_MINUTES: z.coerce.number().default(5),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
+});
+
+export const config = envSchema.parse(process.env);

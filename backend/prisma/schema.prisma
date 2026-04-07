@@ -7,22 +7,53 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id              String           @id @default(uuid())
+  name            String
+  email           String           @unique
+  passwordHash    String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  alerts          Alert[]
+  notifications   Notification[]
+  passwordResets  PasswordReset[]
+
+  @@index([email])
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
 model Alert {
-  id          String   @id @default(uuid())
-  name        String?
-  locationType String  // 'city' or 'coords'
-  city        String?
-  lat         Float?
-  lon         Float?
-  parameter   String   // 'temperature', 'windSpeed', 'precipitationProbability'
-  operator    String   // '>', '>=', '<', '<=', '=='
-  threshold   Float
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  evaluations AlertEvaluation[]
+  id            String            @id @default(uuid())
+  name          String?
+  locationType  String            // 'city' or 'coords'
+  city          String?
+  lat           Float?
+  lon           Float?
+  parameter     String            // 'temperature', 'windSpeed', 'precipitationProbability', etc.
+  operator      String            // '>', '>=', '<', '<=', '=='
+  threshold     Float
+  description   String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  userId        String?
+  user          User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  evaluations   AlertEvaluation[]
+  notifications Notification[]
 
   @@index([locationType])
+  @@index([userId])
 }
 
 model AlertEvaluation {
@@ -34,4 +65,18 @@ model AlertEvaluation {
   alert         Alert    @relation(fields: [alertId], references: [id], onDelete: Cascade)
 
   @@index([alertId, evaluatedAt])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  alertId   String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alert     Alert    @relation(fields: [alertId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([createdAt])
 }

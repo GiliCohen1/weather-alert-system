@@ -19,6 +19,7 @@ export interface WeatherAlert {
   operator: Operator;
   threshold: number;
   description?: string;
+  userId?: string;
   evaluations?: AlertEvaluation[];
   createdAt?: string;
 }
@@ -35,6 +36,7 @@ export interface AlertNotificationPayload {
   parameter: WeatherParameter;
   threshold: number;
   observedValue: number;
+  userId?: string;
 }
 
 export interface WeatherData {
@@ -44,4 +46,29 @@ export interface WeatherData {
   humidity: number;
   precipitationProbability: number;
   timestamp: string;
+}
+
+export interface ForecastInterval {
+  time: string;
+  temperature: number;
+  temperatureApparent: number;
+  windSpeed: number;
+  humidity: number;
+  precipitationProbability: number;
+}
+
+export interface ForecastResponse {
+  location: string;
+  timestep: "1h" | "1d";
+  intervals: ForecastInterval[];
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
